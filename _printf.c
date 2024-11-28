@@ -1,98 +1,116 @@
+#include "main.h"
 #include <stdarg.h>
 #include <unistd.h>
 
 /**
- * _putchar - Writes a character to stdout
- * @c: The character to print
- * Return: On success 1, otherwise -1
+ * _printf - produces output according to a format
+ * @format: format string
+ *
+ * Return: number of characters printed (excluding null byte)
  */
-int _putchar(char c)
+int _printf(const char *format, ...)
 {
-    return write(1, &c, 1);
-}
+    va_list args;
+    int i = 0, count = 0;
 
-/**
- * print_string - Prints a string to stdout
- * @str: The string to print
- * Return: Number of characters printed
- */
-int print_string(char *str)
-{
-    int count = 0;
+    if (!format)
+        return (-1);
 
-    if (!str)
-        str = "(null)";
-    while (*str)
+    va_start(args, format);
+    while (format[i])
     {
-        _putchar(*str);
-        str++;
-        count++;
+        if (format[i] == '%')
+        {
+            i++;
+            count += handle_specifier(format[i], args);
+        }
+        else
+        {
+            count += write(1, &format[i], 1);
+        }
+        i++;
     }
-    return count;
+    va_end(args);
+    return (count);
 }
 
 /**
- * print_number - Prints an integer to stdout
- * @n: The integer to print
- * Return: Number of characters printed
+ * handle_specifier - handles specifiers for _printf
+ * @specifier: the format specifier
+ * @args: arguments list
+ *
+ * Return: number of characters printed
+ */
+int handle_specifier(char specifier, va_list args)
+{
+    char ch, *str;
+    int num;
+
+    switch (specifier)
+    {
+        case 'c':
+            ch = va_arg(args, int);
+            return (write(1, &ch, 1));
+        case 's':
+            str = va_arg(args, char *);
+            if (!str)
+                str = "(null)";
+            return (write(1, str, _strlen(str)));
+        case '%':
+            return (write(1, "%", 1));
+        case 'd':
+        case 'i':
+            num = va_arg(args, int);
+            return (print_number(num));
+        default:
+            write(1, "%", 1);
+            return (write(1, &specifier, 1));
+    }
+}
+
+/**
+ * print_number - prints an integer
+ * @n: integer to print
+ *
+ * Return: number of characters printed
  */
 int print_number(int n)
 {
     unsigned int num;
     int count = 0;
+    char digit;
 
     if (n < 0)
     {
-        _putchar('-');
-        count++;
+        count += write(1, "-", 1);
         num = -n;
     }
     else
     {
         num = n;
     }
+
     if (num / 10)
         count += print_number(num / 10);
-    _putchar((num % 10) + '0');
-    count++;
-    return count;
+
+    digit = (num % 10) + '0';
+    count += write(1, &digit, 1);
+
+    return (count);
 }
 
 /**
- * _printf - Produces output according to a format
- * @format: Format string containing directives
- * Return: Number of characters printed
+ * _strlen - calculates the length of a string
+ * @str: the string
+ *
+ * Return: length of the string
  */
-int _printf(const char *format, ...)
+int _strlen(char *str)
 {
-    va_list args;
-    int i, count = 0;
+    int len = 0;
 
-    if (!format)
-        return (-1);
-
-    va_start(args, format);
-    for (i = 0; format[i]; i++)
-    {
-        if (format[i] == '%')
-        {
-            i++;
-            if (format[i] == 'c')
-                count += _putchar(va_arg(args, int));
-            else if (format[i] == 's')
-                count += print_string(va_arg(args, char *));
-            else if (format[i] == 'd' || format[i] == 'i')
-                count += print_number(va_arg(args, int));
-            else if (format[i] == '%')
-                count += _putchar('%');
-            else
-                count += _putchar(format[i]);
-        }
-        else
-        {
-            count += _putchar(format[i]);
-        }
-    }
-    va_end(args);
-    return count;
+    while (str[len])
+        len++;
+    return (len);
 }
+
