@@ -1,0 +1,9 @@
+.TH _PRINTF "3" "Noyabr 2024" "Holberton Məktəbi" "_PRINTF MANUAL"
+.SH ADI
+_printf \- formatlı çıxış funksiyası
+.SH PROTOTİP
+.B #include "main.h"
+.br
+.B int _printf(const char *format, ...);
+.SH TƏSVİR
+_printf() funksiyası format sətrinə uyğun olaraq çıxış verir...
