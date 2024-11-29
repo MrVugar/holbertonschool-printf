@@ -1,92 +1,95 @@
 #include "main.h"
-#include <stdarg.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h> /* strlen funksiyası üçün */
 
-/**
- * _printf - Custom printf function
- * @format: Format string
- *
- * Return: Number of characters printed
- */
+void print_number(int n)
+{
+    char c;
+
+    if (n < 0)
+    {
+        write(1, "-", 1);
+        n = -n;
+    }
+    if (n / 10)
+        print_number(n / 10);
+
+    c = n % 10 + '0';
+    write(1, &c, 1);
+}
+
+void print_unsigned(unsigned int n, int base, int uppercase)
+{
+    char *digits = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+    char c;
+
+    if (n / base)
+        print_unsigned(n / base, base, uppercase);
+
+    c = digits[n % base];
+    write(1, &c, 1);
+}
+
 int _printf(const char *format, ...)
 {
-    va_list args;
     int count = 0;
+    va_list args;
 
     if (!format)
         return (-1);
 
     va_start(args, format);
+
     while (*format)
     {
-        if (*format == '%')
+        if (*format == '%' && *(format + 1))
         {
             format++;
-            switch (*format)
+            if (*format == 'c')
             {
-            case 'c': /* Character */
-            {
-                char c = va_arg(args, int);
+                char c = (char)va_arg(args, int);
                 count += write(1, &c, 1);
-                break;
             }
-            case 's': /* String */
+            else if (*format == 's')
             {
                 char *str = va_arg(args, char *);
                 if (!str)
                     str = "(null)";
-                count += write(1, str, strlen(str));
-                break;
+                while (*str)
+                    count += write(1, str++, 1);
             }
-            case '%': /* Percent */
-                count += write(1, "%", 1);
-                break;
-            case 'd':
-            case 'i': /* Integer */
+            else if (*format == 'd' || *format == 'i')
             {
-                char buffer[50];
                 int n = va_arg(args, int);
-                snprintf(buffer, 50, "%d", n);
-                count += write(1, buffer, strlen(buffer));
-                break;
+                print_number(n);
             }
-            case 'u': /* Unsigned Integer */
+            else if (*format == 'u')
             {
-                char buffer[50];
                 unsigned int n = va_arg(args, unsigned int);
-                snprintf(buffer, 50, "%u", n);
-                count += write(1, buffer, strlen(buffer));
-                break;
+                print_unsigned(n, 10, 0);
             }
-            case 'o': /* Octal */
+            else if (*format == 'o')
             {
-                char buffer[50];
                 unsigned int n = va_arg(args, unsigned int);
-                snprintf(buffer, 50, "%o", n);
-                count += write(1, buffer, strlen(buffer));
-                break;
+                print_unsigned(n, 8, 0);
             }
-            case 'x': /* Hexadecimal (lowercase) */
-            case 'X': /* Hexadecimal (uppercase) */
+            else if (*format == 'x' || *format == 'X')
             {
-                char buffer[50];
                 unsigned int n = va_arg(args, unsigned int);
-                snprintf(buffer, 50, (*format == 'x') ? "%x" : "%X", n);
-                count += write(1, buffer, strlen(buffer));
-                break;
+                print_unsigned(n, 16, *format == 'X');
             }
-            case 'p': /* Pointer */
+            else if (*format == 'p')
             {
-                char buffer[50];
-                void *ptr = va_arg(args, void *);
-                snprintf(buffer, 50, "%p", ptr);
-                count += write(1, buffer, strlen(buffer));
-                break;
+                void *addr = va_arg(args, void *);
+                write(1, "0x", 2);
+                print_unsigned((unsigned long)addr, 16, 0);
             }
-            default: /* Unsupported format */
-                count += write(1, "%", 1) + write(1, format, 1);
+            else if (*format == '%')
+            {
+                count += write(1, "%", 1);
+            }
+            else
+            {
+                write(1, "%", 1);
+                write(1, format, 1);
             }
         }
         else
@@ -95,6 +98,7 @@ int _printf(const char *format, ...)
         }
         format++;
     }
+
     va_end(args);
     return (count);
 }
